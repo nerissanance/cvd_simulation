@@ -1,22 +1,32 @@
+data_list <- tar_read(null_data)
+SL.library <- "glm"
+det.Q.function=NULL
+varmethod="ic"
+iter=tar_read(iter)
 
-#set Nsub to NULL to run full analysis, or it will run a subset of the data
-run_analyses_SL <- function(data_list,  SL.library,
-                              det.Q.function=NULL, varmethod,iter=iter){
+library(parallel)
+library(doParallel)
+library(foreach)
+library(tidyverse)
+library(ltmle)
+# cl <- makeCluster(1)
+# registerDoParallel(cl)
 
-  #need to figure out parallel processing still!
-   # res_df <- foreach(j = 1:iter, .combine = 'bind_rows', .errorhandling = 'remove') %dopar% {
-  #j=1
+
+res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
+                  .errorhandling = 'remove',
+                  .packages=c("ltmle")) %dopar% {
     data<- data_list[[j]]
   fit <- ltmle(data=data,
                   Anodes = c("glp1_1","glp1_2","glp1_3","glp1_4"),
-                  Cnodes = c("censor_1","censor_2","censor_3","censor_4"),
-                  Lnodes = NULL,
-                  Ynodes = c("mace_hf_1","mace_hf_2","mace_hf_3","mace_hf_4"),
-                  survivalOutcome = F,
+               Cnodes = c("censor_1","censor_2","censor_3","censor_4"),
+               Lnodes = c("insulin_1","insulin_2","insulin_3"),
+               Ynodes = c("mace_hf_1","mace_hf_2","mace_hf_3","mace_hf_4"),
+               survivalOutcome = T,
                   abar = list(c(1,1,1,1),c(0,0,0,0)),
                   deterministic.Q.function = det.Q.function,
                   SL.library = SL.library,
-                  variance.method = varmethod)
+                  variance.method = varmethod )
 
 
    if(!is.null(fit)){
@@ -30,11 +40,9 @@ run_analyses_SL <- function(data_list,  SL.library,
 
     res <- cbind(res.RR, res.ate, res.RR.iptw, res.ate.iptw)
     res$label <- j
-   }
+    }
 
 
   return(res)
-  # }
+   }
 
-  # return(res_df)
-}
