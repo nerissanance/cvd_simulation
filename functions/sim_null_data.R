@@ -4,7 +4,7 @@ sim_null_data <- function(data_specs,n, N_time,reps){
 
   for(i in 1:reps){
     cat("\ni: ",i,"\n")
-
+    set.seed(240)
     d <- sim(data_specs,n)
 
     # flag <- TRUE

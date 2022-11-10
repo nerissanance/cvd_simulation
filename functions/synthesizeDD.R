@@ -39,7 +39,7 @@ synthesizeDD <- function(coefficients){
     m <- lvm()
     distribution(m,"age_base") <- normal.lvm(mean=70,sd=10)
     distribution(m,"sex") <- binomial.lvm(p=0.4)
-    m <- addvar(m,"ie.type")
+    m <- addvar(m,"ie_type")
     m <- addvar(m,"code5txt")
     m <- addvar(m,"quartile_income")
     # loop across time and variables
