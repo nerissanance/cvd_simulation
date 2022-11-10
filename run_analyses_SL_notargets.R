@@ -1,8 +1,4 @@
-data_list <- tar_read(null_data)
-SL.library <- "glm"
-det.Q.function=NULL
-varmethod="ic"
-iter=tar_read(iter)
+
 
 library(parallel)
 library(doParallel)
@@ -11,8 +7,14 @@ library(tidyverse)
 library(ltmle)
 # cl <- makeCluster(1)
 # registerDoParallel(cl)
+registerDoParallel(cores=8)
 
-
+run_analysis_notargets <- function(data_list=data_list,
+                                   SL.library,
+                                   det.Q.function=NULL,
+                                   varmethod="ic",
+                                   iter,
+                                   gcomp=F){
 res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
                   .errorhandling = 'remove',
                   .packages=c("ltmle")) %dopar% {
@@ -26,10 +28,11 @@ res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
                   abar = list(c(1,1,1,1),c(0,0,0,0)),
                   deterministic.Q.function = det.Q.function,
                   SL.library = SL.library,
-                  variance.method = varmethod )
+                  variance.method = varmethod ,
+               gcomp=gcomp)
 
 
-   if(!is.null(fit)){
+   if(!is.null(fit) & gcomp==F){
     res <- summary(fit)
     res.iptw <- summary(fit, estimator="iptw")
     res.RR <- as.data.frame(res$effect.measures$RR)
@@ -40,9 +43,48 @@ res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
 
     res <- cbind(res.RR, res.ate, res.RR.iptw, res.ate.iptw)
     res$label <- j
-    }
+
+
+   }else if(!is.null(fit) & gcomp==T){
+     res  <- summary(fit, estimator="gcomp")
+
+     res.RR  <- as.data.frame(res$effect.measures$RR) %>% rename(gcomp.long.name=long.name, gcomp.estimate=estimate, gcomp.sd=std.dev , gcomp.pval=pvalue, gcomp.ci.lb=CI.2.5., gcomp.ci.ub=  CI.97.5., gcomp.log.std.err=log.std.err)
+     res.ate <- as.data.frame(res$effect.measures$ATE) %>% rename(gcomp.ate.long.name=long.name, gcomp.ate=estimate, gcomp.ate.sd=std.dev , gcomp.ate.pval=pvalue, gcomp.ate.ci.lb=CI.2.5., gcomp.ate.ci.ub=  CI.97.5., gcomp.ate.log.std.err=log.std.err)
+
+     res <- cbind(res.RR, res.ate, res.RR, res.ate)
+     res$label <- j
+
+
+   }
 
 
   return(res)
    }
 
+#oracle covarage for ATE
+res_df$estimator_se <- (sum(res_df$ate - mean(res_df$ate))/iter)^(1/2)
+res_df$ate.oracle.lb <- res_df$ate - (1.96*res_df$estimator_se)
+res_df$ate.oracle.ub <- res_df$ate + (1.96*res_df$estimator_se)
+oracle.cov <- ifelse(res_df$ate >= res_df$ate.oracle.lb &
+                       res_df$ate <= res_df$ate.oracle.ub, 1,0)
+
+
+#oracle coverage for log(RR)
+res_df$log_RR <- log(res_df$estimate)
+res_df$estimator_RR_se <- (sum(res_df$log_RR - mean(res_df$log_RR))/iter)^(1/2)
+res_df$RR.oracle.lb <- res_df$log_RR - (1.96*res_df$estimator_RR_se)
+res_df$RR.oracle.ub <- res_df$log_RR + (1.96*res_df$estimator_RR_se)
+oracle.covRR <- ifelse(res_df$log_RR >= res_df$RR.oracle.lb &
+                       res_df$log_RR <= res_df$RR.oracle.ub, 1,0)
+
+return(res_df)
+}
+
+data_list <- tar_read(null_data)
+iter=tar_read(iter)
+run_gcomp <- run_analysis_notargets(data_list=data_list,
+                                    SL.library="glm",
+                                    det.Q.function=NULL,
+                                    varmethod="ic",
+                                    iter=iter,
+                                    gcomp=T)
