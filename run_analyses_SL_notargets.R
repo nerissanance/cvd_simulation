@@ -36,10 +36,28 @@ res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
     res <- summary(fit)
     res.iptw <- summary(fit, estimator="iptw")
     res.RR <- as.data.frame(res$effect.measures$RR)
-    res.ate <- as.data.frame(res$effect.measures$ATE) %>% rename(ate.long.name=long.name,ate=estimate, ate.sd=std.dev , ate.pval=pvalue, ate.ci.lb=CI.2.5., ate.ci.ub=  CI.97.5., ate.log.std.err=log.std.err)
+    res.ate <- as.data.frame(res$effect.measures$ATE) %>% rename(ate.long.name=long.name,
+                                                                 ate=estimate,
+                                                                 ate.sd=std.dev ,
+                                                                 ate.pval=pvalue,
+                                                                 ate.ci.lb=CI.2.5.,
+                                                                 ate.ci.ub=  CI.97.5.,
+                                                                 ate.log.std.err=log.std.err)
 
-    res.RR.iptw <- as.data.frame(res.iptw$effect.measures$RR) %>% rename(iptw.long.name=long.name, iptw.estimate=estimate, iptw.sd=std.dev , iptw.pval=pvalue, iptw.ci.lb=CI.2.5., iptw.ci.ub=  CI.97.5., iptw.log.std.err=log.std.err)
-    res.ate.iptw <- as.data.frame(res$effect.measures$ATE) %>% rename(iptw.ate.long.name=long.name, iptw.ate=estimate, iptw.ate.sd=std.dev , iptw.ate.pval=pvalue, iptw.ate.ci.lb=CI.2.5., iptw.ate.ci.ub=  CI.97.5., iptw.ate.log.std.err=log.std.err)
+    res.RR.iptw <- as.data.frame(res.iptw$effect.measures$RR) %>% rename(iptw.long.name=long.name,
+                                                                         iptw.estimate=estimate,
+                                                                         iptw.sd=std.dev ,
+                                                                         iptw.pval=pvalue,
+                                                                         iptw.ci.lb=CI.2.5.,
+                                                                         iptw.ci.ub=  CI.97.5.,
+                                                                         iptw.log.std.err=log.std.err)
+    res.ate.iptw <- as.data.frame(res.iptw$effect.measures$ATE) %>% rename(iptw.ate.long.name=long.name,
+                                                                           iptw.ate=estimate,
+                                                                           iptw.ate.sd=std.dev ,
+                                                                           iptw.ate.pval=pvalue,
+                                                                           iptw.ate.ci.lb=CI.2.5.,
+                                                                           iptw.ate.ci.ub=  CI.97.5.,
+                                                                           iptw.ate.log.std.err=log.std.err)
 
     res <- cbind(res.RR, res.ate, res.RR.iptw, res.ate.iptw)
     res$label <- j
@@ -61,33 +79,19 @@ res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
   return(res)
    }
 
-#oracle covarage for ATE
-res_df$estimator_se <- ((sum(res_df$ate - mean(res_df$ate)))^2/iter)^(1/2)
-res_df$ate.oracle.lb <- res_df$ate - (1.96*res_df$estimator_se)
-res_df$ate.oracle.ub <- res_df$ate + (1.96*res_df$estimator_se)
-oracle.cov <- (res_df$ate >= res_df$ate.oracle.lb &
-                       res_df$ate <= res_df$ate.oracle.ub)
-
-
-#oracle coverage for log(RR)
-res_df$log_RR <- log(res_df$estimate)
-res_df$estimator_RR_se <- ((sum(res_df$log_RR - mean(res_df$log_RR)))^2/iter)^(1/2)
-res_df$RR.oracle.lb <- res_df$log_RR - (1.96*res_df$estimator_RR_se)
-res_df$RR.oracle.ub <- res_df$log_RR + (1.96*res_df$estimator_RR_se)
-oracle.covRR <- (res_df$log_RR >= res_df$RR.oracle.lb &
-                       res_df$log_RR <= res_df$RR.oracle.ub)
-
-
 
 
 return(res_df)
 }
 
-data_list <- tar_read(null_data)[1:50]
+data_list <- tar_read(null_data)
 iter=tar_read(iter)
+system.time({
 run_tmle <- run_analysis_notargets(data_list=data_list,
-                                    SL.library="glm",
+                                    SL.library=c("SL.glm","SL.mean"),
                                     det.Q.function=NULL,
                                     varmethod="ic",
                                     iter=iter,
                                     gcomp=F)
+})
+saveRDS(run_tmle, file="tmle_run_glm.RDS")
