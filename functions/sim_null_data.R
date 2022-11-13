@@ -1,10 +1,10 @@
-sim_null_data <- function(data_specs,n, N_time,reps){
+sim_null_data <- function(data_specs,n, N_time,iter){
 
   sim_list <- NULL
+  set.seed(240)
 
-  for(i in 1:reps){
+  for(i in 1:iter){
     cat("\ni: ",i,"\n")
-    set.seed(240)
     d <- sim(data_specs,n)
 
     # flag <- TRUE
@@ -41,8 +41,8 @@ sim_null_data <- function(data_specs,n, N_time,reps){
 
 
     #Scramble outcomes (Keeping longitudinal pattern together)
-    X <- d %>% select(!(starts_with("event_")|starts_with("censor_")))
-    Y <- d %>% select((starts_with("event_")|starts_with("censor_")))
+    X <- d %>% select(!(starts_with("mace_hf_")|starts_with("censor_")))
+    Y <- d %>% select((starts_with("mace_hf_")|starts_with("censor_")))
     Y <- Y[sample(nrow(Y)),]
 
     d<- cbind(X,Y)
@@ -62,7 +62,7 @@ sim_null_data <- function(data_specs,n, N_time,reps){
 
 
 
-    d <- d %>% select("censor_1",
+    d <- d %>% select("age_base", "sex","ie_type","code5txt","quartile_income","censor_1",
                       "glp1_1",
                       "mace_hf_1",
                       # "chronic.pulmonary.disease_1",

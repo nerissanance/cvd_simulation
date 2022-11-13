@@ -7,7 +7,7 @@ library(tidyverse)
 library(ltmle)
 # cl <- makeCluster(1)
 # registerDoParallel(cl)
-#registerDoParallel(cores=parallel::detectCores()/2)
+registerDoParallel(cores=parallel::detectCores()/2)
 
 run_analysis_notargets <- function(data_list=data_list,
                                    SL.library,

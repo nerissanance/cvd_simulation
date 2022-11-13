@@ -1,5 +1,5 @@
 packs <- c("targets",
-           "heaven",
+           # "heaven",
            "foreach",
            "parallel",
            "data.table",
@@ -13,6 +13,8 @@ targets::tar_option_set(packages = packs)
 
 #source functions from functions folder
 for(f in list.files("functions",".R$",full.names=TRUE)){source(f)}
+# for(f in list.files("../heaven/R",".R$",full.names=TRUE)){source(f)}
+
 
 # plan(callr)
 # future::plan(future::multisession, workers = 2)
@@ -21,7 +23,7 @@ for(f in list.files("functions",".R$",full.names=TRUE)){source(f)}
 
 list(
   tar_target(N_time,4)
-  ,tar_target(iter,500)
+  ,tar_target(iter,100)
   ,tar_target(cc,{
     cc <- data.table::fread("./data/coefficients.txt")
     cc <- cc[cc$time%in%0:N_time,]
@@ -35,7 +37,7 @@ list(
   ,tar_target(null_data,sim_null_data(data_specs=data_specs,
                                        n=115698,
                                        N_time=N_time,
-                                       reps = iter))
+                                       iter = iter))
   # ,tar_target(analysis,run_analyses_SL(data_list=null_data,
   #                                      SL.library="glm",
   #                                      det.Q.function=NULL,
