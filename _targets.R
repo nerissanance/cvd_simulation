@@ -23,7 +23,7 @@ for(f in list.files("functions",".R$",full.names=TRUE)){source(f)}
 
 list(
   tar_target(N_time,4)
-  ,tar_target(iter,100)
+  ,tar_target(iter,250)
   ,tar_target(cc,{
     cc <- data.table::fread("./data/coefficients.txt")
     cc <- cc[cc$time%in%0:N_time,]
@@ -38,6 +38,10 @@ list(
                                        n=115698,
                                        N_time=N_time,
                                        iter = iter))
+ ,tar_target(sig_data,sim_sig_data(data_specs=data_specs,
+                                    n=115698,
+                                    N_time=N_time,
+                                    iter = iter))
   # ,tar_target(analysis,run_analyses_SL(data_list=null_data,
   #                                      SL.library="glm",
   #                                      det.Q.function=NULL,

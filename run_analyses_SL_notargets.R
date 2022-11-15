@@ -66,10 +66,22 @@ res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
    }else if(!is.null(fit) & gcomp==T){
      res  <- summary(fit, estimator="gcomp")
 
-     res.RR  <- as.data.frame(res$effect.measures$RR) %>% rename(gcomp.long.name=long.name, gcomp.estimate=estimate, gcomp.sd=std.dev , gcomp.pval=pvalue, gcomp.ci.lb=CI.2.5., gcomp.ci.ub=  CI.97.5., gcomp.log.std.err=log.std.err)
-     res.ate <- as.data.frame(res$effect.measures$ATE) %>% rename(gcomp.ate.long.name=long.name, gcomp.ate=estimate, gcomp.ate.sd=std.dev , gcomp.ate.pval=pvalue, gcomp.ate.ci.lb=CI.2.5., gcomp.ate.ci.ub=  CI.97.5., gcomp.ate.log.std.err=log.std.err)
+     res.RR  <- as.data.frame(res$effect.measures$RR) %>% rename(gcomp.long.name=long.name,
+                                                                 gcomp.estimate=estimate,
+                                                                 gcomp.sd=std.dev ,
+                                                                 gcomp.pval=pvalue,
+                                                                 gcomp.ci.lb=CI.2.5.,
+                                                                 gcomp.ci.ub=  CI.97.5.,
+                                                                 gcomp.log.std.err=log.std.err)
+     res.ate <- as.data.frame(res$effect.measures$ATE) %>% rename(gcomp.ate.long.name=long.name,
+                                                                  gcomp.ate=estimate,
+                                                                  gcomp.ate.sd=std.dev ,
+                                                                  gcomp.ate.pval=pvalue,
+                                                                  gcomp.ate.ci.lb=CI.2.5.,
+                                                                  gcomp.ate.ci.ub=  CI.97.5.,
+                                                                  gcomp.ate.log.std.err=log.std.err)
 
-     res <- cbind(res.RR, res.ate, res.RR, res.ate)
+     res <- cbind(res.RR, res.ate)
      res$label <- j
 
 
@@ -84,14 +96,79 @@ res_df <- foreach(j = 1:iter, .combine = 'bind_rows',
 return(res_df)
 }
 
+# data_list <- tar_read(null_data)
+# iter=tar_read(iter)
+# system.time({
+# run_tmle <- run_analysis_notargets(data_list=data_list,
+#                                     SL.library=c("SL.glm","SL.mean"),
+#                                     det.Q.function=NULL,
+#                                     varmethod="ic",
+#                                     iter=iter,
+#                                     gcomp=F)
+# })
+# saveRDS(run_tmle, file="./data/tmle_run_SLglm.RDS")
+
+
+# data_list <- tar_read(sig_data)
+# iter=tar_read(iter)
+# system.time({
+#   run_tmle <- run_analysis_notargets(data_list=data_list,
+#                                      SL.library=c("SL.glm","SL.mean"),
+#                                      det.Q.function=NULL,
+#                                      varmethod="ic",
+#                                      iter=iter,
+#                                      gcomp=F)
+# })
+# saveRDS(run_tmle, file="./data/tmle_run_SLglm_sigdata.RDS")
+
+
+data_list <- tar_read(sig_data)
+iter=tar_read(iter)
+system.time({
+  run_tmle <- run_analysis_notargets(data_list=data_list,
+                                     SL.library=c("SL.glm","SL.mean"),
+                                     det.Q.function=NULL,
+                                     varmethod="ic",
+                                     iter=iter,
+                                     gcomp=T)
+})
+saveRDS(run_tmle, file="./data/tmle_run_SLglm_sigdata_gcomp.RDS")
+
+
 data_list <- tar_read(null_data)
 iter=tar_read(iter)
 system.time({
-run_tmle <- run_analysis_notargets(data_list=data_list,
-                                    SL.library=c("SL.glm","SL.mean"),
-                                    det.Q.function=NULL,
-                                    varmethod="ic",
-                                    iter=iter,
-                                    gcomp=F)
+  run_tmle <- run_analysis_notargets(data_list=data_list,
+                                     SL.library=c("SL.glm","SL.mean"),
+                                     det.Q.function=NULL,
+                                     varmethod="ic",
+                                     iter=iter,
+                                     gcomp=T)
 })
-saveRDS(run_tmle, file="tmle_run_glm.RDS")
+saveRDS(run_tmle, file="./data/tmle_run_SLglm_nulldata_gcomp.RDS")
+
+
+# data_list <- tar_read(null_data)
+# iter=tar_read(iter)
+# system.time({
+# run_tmle <- run_analysis_notargets(data_list=data_list,
+#                                     SL.library=c("SL.glm","SL.mean"),
+#                                     det.Q.function=NULL,
+#                                     varmethod="ic",
+#                                     iter=iter,
+#                                     gcomp=F)
+# })
+# saveRDS(run_tmle, file="./data/tmle_run_SLglm.RDS")
+
+
+# data_list <- tar_read(sig_data)
+# iter=tar_read(iter)
+# system.time({
+#   run_tmle <- run_analysis_notargets(data_list=data_list,
+#                                      SL.library=c("SL.glm","SL.mean"),
+#                                      det.Q.function=NULL,
+#                                      varmethod="ic",
+#                                      iter=iter,
+#                                      gcomp=F)
+# })
+# saveRDS(run_tmle, file="./data/tmle_run_SLglm_sigdata.RDS")
