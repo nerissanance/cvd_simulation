@@ -7,7 +7,7 @@ packs <- c("targets",
            "lava",
            "ltmle",
            "future",
-           "future.callr")
+           "future.callr","stringr")
 library(targets)
 targets::tar_option_set(packages = packs)
 
@@ -23,21 +23,27 @@ for(f in list.files("functions",".R$",full.names=TRUE)){source(f)}
 
 list(
   tar_target(N_time,4)
-  ,tar_target(iter,250)
+  ,tar_target(iter,5)
   ,tar_target(cc,{
     cc <- data.table::fread("./data/coefficients.txt")
     cc <- cc[cc$time%in%0:N_time,]
     return(cc)
   }
 )
+,tar_target(cc_new,{
+  cc <- data.table::fread("./data/coefficients_perturb.txt")
+  cc <- cc[cc$time%in%0:N_time,]
+  return(cc)
+}
+)
   ,tar_target(data_specs, {
     data_specs <- synthesizeDD(cc)
     return(data_specs)
   } )
-  ,tar_target(null_data,sim_null_data(data_specs=data_specs,
-                                       n=115698,
-                                       N_time=N_time,
-                                       iter = iter))
+  # ,tar_target(null_data,sim_null_data(data_specs=data_specs,
+  #                                      n=115698,
+  #                                      N_time=N_time,
+  #                                      iter = iter))
  ,tar_target(sig_data,sim_sig_data(data_specs=data_specs,
                                     n=115698,
                                     N_time=N_time,
@@ -47,4 +53,12 @@ list(
   #                                      det.Q.function=NULL,
   #                                      varmethod="ic",
   #                                      iter=iter))
-  )
+
+# ,tar_target(RD_truth, get_truth(coefficients=cc,
+#                                 N_time=N_time,
+#                                 nsamp=1000000))
+
+#make perturbed coefficients
+,tar_target(cc_new,make_perturbed_data())
+
+)
